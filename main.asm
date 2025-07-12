@@ -1,7 +1,7 @@
 section .data
     nl db 10, 0
     sep db ' ', 0
-    arr dd 6, 5, 12, 10, 9, 1
+    arr dd 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
     len equ ($ - arr) / 4
 
 section .bss
@@ -13,13 +13,10 @@ section .text
     global _start
 
 ; void merge(int left, int mid, int right)
-; parameters:
-;    [ebp + 8]  -> left
-;    [ebp + 12] -> mid
-;    [ebp + 16] -> right
 merge:
     push ebp
     mov ebp, esp
+    sub esp, 8
 
     push ebx
     push esi
@@ -30,26 +27,26 @@ merge:
     mov edx, [ebp + 8]  ; left
     sub ebx, edx
     inc ebx
-    push ebx
+    mov [ebp - 4], ebx
 
     ; n2 = right - mid
     mov ebx, [ebp + 16] ; right
     mov edx, [ebp + 12] ; mid
     sub ebx, edx
-    push ebx
+    mov [ebp - 8], ebx
     xor eax, eax ; i = 0
 
 .copy_left:
     ; i >= n1
-    mov ebx, [esp + 4] ; n1
+    mov ebx, [ebp - 4] ; n1
     cmp eax, ebx
     jge .copy_left_done
 
     ; left_arr[i] = arr[left + i]
     mov edx, [ebp + 8] ; left
     add edx, eax       ; left + i
-    mov edx, [arr + edx * 4]
-    mov [left_arr + eax * 4], edx
+    mov ebx, [arr + edx * 4]
+    mov [left_arr + eax * 4], ebx
 
     inc eax ; i++
     jmp .copy_left
@@ -59,7 +56,7 @@ merge:
 
 .copy_right:
     ; i >= n2
-    mov ebx, [esp] ; n2
+    mov ebx, [ebp - 8] ; n2
     cmp eax, ebx
     jge .copy_right_done
 
@@ -80,12 +77,12 @@ merge:
 
 .merge_loop:
     ; i >= n1
-    mov ebx, [esp + 4] ; n1
+    mov ebx, [ebp - 4] ; n1
     cmp eax, ebx
     jge .copy_left_remaining
 
     ; j >= n2
-    mov ebx, [esp] ; n2
+    mov ebx, [ebp - 8] ; n2
     cmp ecx, ebx
     jge .copy_left_remaining
 
@@ -113,7 +110,7 @@ merge:
 
 .copy_left_remaining:
     ; i >= n1
-    mov ebx, [esp + 4] ; n1
+    mov ebx, [ebp - 4] ; n1
     cmp eax, ebx
     jge .copy_right_remaining
 
@@ -127,7 +124,7 @@ merge:
 
 .copy_right_remaining:
     ; j >= n2
-    mov ebx, [esp] ; n2
+    mov ebx, [ebp - 8] ; n2
     cmp ecx, ebx
     jge .merge_done
 
@@ -140,7 +137,6 @@ merge:
     jmp .copy_right_remaining
 
 .merge_done:
-    add esp, 8
     pop edi
     pop esi
     pop ebx
@@ -150,9 +146,6 @@ merge:
     ret
 
 ; void mergesort(int left, int right)
-; parameters:
-;    [ebp + 8]  -> left
-;    [ebp + 12] -> right
 mergesort:
     push ebp
     mov ebp, esp
@@ -173,29 +166,30 @@ mergesort:
     shr eax, 1   ; (right - left) / 2
     add eax, ebx ; left + (right - left) / 2
 
+    mov [ebp - 4], eax ; mid
+    mov [ebp - 8], edx ; right
+
     ; mergesort(left, mid)
-    mov [ebp - 4], eax
-    mov [ebp - 8], edx
-    push eax ; mid
-    push ebx ; left
+    push eax        ; mid
+    push ebx        ; left
     call mergesort
     add esp, 8
 
     ; mergesort(mid + 1, right)
-    mov ecx, [ebp - 4]
-    inc ecx
-    mov edx, [ebp - 8]
+    mov ecx, [ebp - 4] ; mid
+    inc ecx            ; mid + 1
+    mov edx, [ebp - 8] ; right
     push edx
     push ecx
     call mergesort
     add esp, 8
 
     ; merge(left, mid, right)
-    mov edx, [ebp - 8]
-    mov eax, [ebp - 4]
-    push edx ; right
-    push eax ; mid
-    push ebx ; left
+    mov eax, [ebp - 4] ; mid
+    mov edx, [ebp - 8] ; right
+    push edx           ; right
+    push eax           ; mid
+    push ebx           ; left
     call merge
     add esp, 12
 
@@ -208,6 +202,7 @@ mergesort:
     pop ebp
     ret
 
+; void print(int num)
 print:
     push eax
     push ecx
@@ -248,7 +243,7 @@ print:
     mov ebx, 1
     mov ecx, sep
     mov edx, 1
-    int 0x80
+    int 80h
 
     pop esi
     pop edx
