@@ -1,3 +1,4 @@
+// This code is taken directly from: https://www.geeksforgeeks.org/c/c-program-for-merge-sort/
 // C program for the implementation of merge sort
 #include <stdio.h>
 #include <stdlib.h>
